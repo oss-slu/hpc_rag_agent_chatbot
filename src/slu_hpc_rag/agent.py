@@ -34,9 +34,21 @@ def build_agent(model: BaseChatModel, tools: Sequence[BaseTool] = ()):
     return create_agent(model=model, tools=list(tools), system_prompt=SYSTEM_PROMPT)
 
 
-def answer_text(result: dict) -> str:
-    """Pull the final answer out of an agent result as plain text."""
-    content = result["messages"][-1].content
+def message_text(content: str | list) -> str:
+    """Plain text of a message or chunk.
+
+    vLLM sends content as a string; Claude sends a list of blocks, of which
+    only the ``text`` blocks are answer text.
+    """
     if isinstance(content, str):
         return content
-    return "".join(part.get("text", "") for part in content if isinstance(part, dict))
+    return "".join(
+        block.get("text", "")
+        for block in content
+        if isinstance(block, dict) and block.get("type") == "text"
+    )
+
+
+def answer_text(result: dict) -> str:
+    """Pull the final answer out of an agent result as plain text."""
+    return message_text(result["messages"][-1].content)
