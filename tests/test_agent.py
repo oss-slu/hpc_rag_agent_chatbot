@@ -24,6 +24,7 @@ def test_build_model_uses_configured_model():
     model = build_model(Settings(chat_model="anthropic:claude-haiku-4-5", anthropic_api_key="x"))
     assert "haiku" in model.model
     assert model.temperature is None  # not sent; Claude Sonnet 5.5+ returns 400 for it
+    assert model.anthropic_api_key.get_secret_value() == "x"  # key from .env is used
 
 
 def test_build_model_sends_temperature_only_when_set():
