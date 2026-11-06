@@ -10,7 +10,9 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql://hpc:hpc@localhost:5432/hpc_rag"
     chat_model: str = "anthropic:claude-sonnet-5-5"
-    temperature: float = 0.0
+    # Unset: the provider default. Claude Sonnet 5.5 and newer reject any other
+    # value; set it only for models that accept it (e.g. vLLM in deployment).
+    temperature: float | None = None
     anthropic_api_key: str | None = None
     cors_origins: list[str] = []
 

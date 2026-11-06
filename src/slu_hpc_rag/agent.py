@@ -27,7 +27,14 @@ limits, paths or commands.
 
 
 def build_model(settings: Settings) -> BaseChatModel:
-    return init_chat_model(settings.chat_model, temperature=settings.temperature)
+    options: dict = {}
+    if settings.temperature is not None:
+        options["temperature"] = settings.temperature
+    # Settings read .env, but the Anthropic client only looks at the real
+    # environment, so a key that lives in .env has to be passed explicitly.
+    if settings.anthropic_api_key and settings.chat_model.startswith("anthropic:"):
+        options["api_key"] = settings.anthropic_api_key
+    return init_chat_model(settings.chat_model, **options)
 
 
 def build_agent(model: BaseChatModel, tools: Sequence[BaseTool] = ()):
