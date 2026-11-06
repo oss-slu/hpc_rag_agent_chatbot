@@ -116,7 +116,9 @@ def clean(markdown: str) -> str:
             continue
         if _NAV_LINE.match(line):
             continue
-        line = _PERMALINK.sub("", line).rstrip()
+        if _HEADING.match(line):  # permalink marks only appear on headings
+            line = _PERMALINK.sub("", line)
+        line = line.rstrip()
         if line or (out and out[-1]):  # collapse runs of blank lines
             out.append(line)
     return "\n".join(out).strip("\n")
@@ -127,7 +129,8 @@ def split(page: Page) -> list[DocChunk]:
     chunks: list[DocChunk] = []
     for path, blocks in _sections(clean(page.markdown), page.title):
         heading = " > ".join(path)
-        budget = MAX_TOKENS - estimate_tokens(heading + "\n\n")
+        # A very long heading path can't eat the whole budget (only matters for odd pages).
+        budget = max(MAX_TOKENS - estimate_tokens(heading + "\n\n"), MAX_TOKENS // 2)
         for text in _pack(blocks, budget):
             chunks.append(
                 DocChunk(page.slug, page.url, heading, len(chunks), f"{heading}\n\n{text}")
@@ -176,9 +179,13 @@ def _table_end(lines: list[str], i: int) -> int | None:
     if not (line.lstrip().startswith("|") or has_delimiter):
         return None
     end = i + 1
-    while end < len(lines) and lines[end].strip() and "|" in lines[end] and not _opens(lines[end]):
+    while end < len(lines) and _is_table_row(lines[end]):
         end += 1
     return end
+
+
+def _is_table_row(line: str) -> bool:
+    return bool(line.strip()) and "|" in line and not _opens(line) and not _HEADING.match(line)
 
 
 def _sections(text: str, title: str) -> list[tuple[list[str], list[_Block]]]:
@@ -233,11 +240,11 @@ def _is_prose(lines: list[str], i: int) -> bool:
 
 def _pack(blocks: list[_Block], budget: int) -> list[str]:
     """Join blocks into chunks of at most ``budget`` tokens, with a short overlap."""
-    # Long paragraphs are cut small enough that the overlap still fits in front.
+    # Paragraphs are cut small enough that the overlap always fits in front of them.
     piece_budget = budget - OVERLAP_TOKENS - 1
     pieces: list[_Block] = []
     for block in blocks:
-        if not block.atomic and estimate_tokens(block.text) > budget:
+        if not block.atomic and estimate_tokens(block.text) > piece_budget:
             pieces.extend(_Block(t, atomic=False) for t in _split_prose(block.text, piece_budget))
         else:
             pieces.append(block)

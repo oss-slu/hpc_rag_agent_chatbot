@@ -123,6 +123,16 @@ def test_indented_backticks_do_not_close_a_fence():
     assert "## still code" in chunk.body and "line 699" in chunk.body
 
 
+def test_heading_right_after_a_table_is_not_swallowed():
+    chunks = split(page("# Doc\n\nA | B\n--- | ---\nx | y\n## CPU | GPU\nDetails."))
+    assert [c.heading for c in chunks] == ["Doc", "Doc > CPU | GPU"]
+
+
+def test_clean_keeps_table_cells_untouched():
+    md = "# Doc ¶\n\n| A |\n| --- |\n| ¶ |"
+    assert clean(md) == "# Doc\n\n| A |\n| --- |\n| ¶ |"
+
+
 def test_code_block_is_never_split(pages):
     for p in pages.values():
         for c in split(p):
@@ -189,6 +199,19 @@ def test_one_huge_paragraph_is_cut():
     assert all(c.tokens <= chunking.MAX_TOKENS for c in chunks)
     for a, b in zip(chunks, chunks[1:], strict=False):
         assert " ".join(a.body.split()[-5:]) in b.body  # overlap survives the cut
+
+
+def test_overlap_between_near_cap_paragraphs():
+    chunks = split(page("# Doc\n\n" + "a " * 1450 + "\n\n" + "b " * 1450))
+    assert len(chunks) > 1
+    assert all(c.tokens <= chunking.MAX_TOKENS for c in chunks)
+    for a, b in zip(chunks, chunks[1:], strict=False):
+        assert " ".join(a.body.split()[-5:]) in b.body
+
+
+def test_very_long_heading_does_not_crash():
+    chunks = split(page("# Doc\n\n## " + "h" * 2794 + "\n\n" + "word " * 1000))
+    assert len(chunks) > 1
 
 
 def test_one_huge_word_is_cut():
