@@ -1,89 +1,121 @@
 <!-- Source: https://example.edu/reference/long-script/ | Retrieved: 2026-09-30T12:00:00Z -->
 # Long Script
 
-This page has one code block that is longer than a whole chunk.
+This page has one job script that is longer than a whole chunk.
 
 ```bash
-echo "step 1: process the example input file and write the result"
-echo "step 2: process the example input file and write the result"
-echo "step 3: process the example input file and write the result"
-echo "step 4: process the example input file and write the result"
-echo "step 5: process the example input file and write the result"
-echo "step 6: process the example input file and write the result"
-echo "step 7: process the example input file and write the result"
-echo "step 8: process the example input file and write the result"
-echo "step 9: process the example input file and write the result"
-echo "step 10: process the example input file and write the result"
-echo "step 11: process the example input file and write the result"
-echo "step 12: process the example input file and write the result"
-echo "step 13: process the example input file and write the result"
-echo "step 14: process the example input file and write the result"
-echo "step 15: process the example input file and write the result"
-echo "step 16: process the example input file and write the result"
-echo "step 17: process the example input file and write the result"
-echo "step 18: process the example input file and write the result"
-echo "step 19: process the example input file and write the result"
-echo "step 20: process the example input file and write the result"
-echo "step 21: process the example input file and write the result"
-echo "step 22: process the example input file and write the result"
-echo "step 23: process the example input file and write the result"
-echo "step 24: process the example input file and write the result"
-echo "step 25: process the example input file and write the result"
-echo "step 26: process the example input file and write the result"
-echo "step 27: process the example input file and write the result"
-echo "step 28: process the example input file and write the result"
-echo "step 29: process the example input file and write the result"
-echo "step 30: process the example input file and write the result"
-echo "step 31: process the example input file and write the result"
-echo "step 32: process the example input file and write the result"
-echo "step 33: process the example input file and write the result"
-echo "step 34: process the example input file and write the result"
-echo "step 35: process the example input file and write the result"
-echo "step 36: process the example input file and write the result"
-echo "step 37: process the example input file and write the result"
-echo "step 38: process the example input file and write the result"
-echo "step 39: process the example input file and write the result"
-echo "step 40: process the example input file and write the result"
-echo "step 41: process the example input file and write the result"
-echo "step 42: process the example input file and write the result"
-echo "step 43: process the example input file and write the result"
-echo "step 44: process the example input file and write the result"
-echo "step 45: process the example input file and write the result"
-echo "step 46: process the example input file and write the result"
-echo "step 47: process the example input file and write the result"
-echo "step 48: process the example input file and write the result"
-echo "step 49: process the example input file and write the result"
-echo "step 50: process the example input file and write the result"
-echo "step 51: process the example input file and write the result"
-echo "step 52: process the example input file and write the result"
-echo "step 53: process the example input file and write the result"
-echo "step 54: process the example input file and write the result"
-echo "step 55: process the example input file and write the result"
-echo "step 56: process the example input file and write the result"
-echo "step 57: process the example input file and write the result"
-echo "step 58: process the example input file and write the result"
-echo "step 59: process the example input file and write the result"
-echo "step 60: process the example input file and write the result"
-echo "step 61: process the example input file and write the result"
-echo "step 62: process the example input file and write the result"
-echo "step 63: process the example input file and write the result"
-echo "step 64: process the example input file and write the result"
-echo "step 65: process the example input file and write the result"
-echo "step 66: process the example input file and write the result"
-echo "step 67: process the example input file and write the result"
-echo "step 68: process the example input file and write the result"
-echo "step 69: process the example input file and write the result"
-echo "step 70: process the example input file and write the result"
-echo "step 71: process the example input file and write the result"
-echo "step 72: process the example input file and write the result"
-echo "step 73: process the example input file and write the result"
-echo "step 74: process the example input file and write the result"
-echo "step 75: process the example input file and write the result"
-echo "step 76: process the example input file and write the result"
-echo "step 77: process the example input file and write the result"
-echo "step 78: process the example input file and write the result"
-echo "step 79: process the example input file and write the result"
-echo "step 80: process the example input file and write the result"
+#!/bin/bash
+#SBATCH --job-name=example-pipeline
+#SBATCH --partition=example
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16G
+#SBATCH --time=02:00:00
+#SBATCH --output=logs/%x-%j.out
+#SBATCH --error=logs/%x-%j.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=student@example.edu
+
+# Stop on the first error, an unset variable, or a failed pipe.
+set -euo pipefail
+
+# ---------------------------------------------------------------
+# Settings
+# ---------------------------------------------------------------
+PROJECT_DIR="/project/example-lab/pipeline"
+INPUT_DIR="$PROJECT_DIR/input"
+OUTPUT_DIR="$PROJECT_DIR/output/$SLURM_JOB_ID"
+SCRATCH_DIR="/scratch/$USER/$SLURM_JOB_ID"
+SAMPLES=(sample_a sample_b sample_c sample_d sample_e sample_f)
+THREADS="${SLURM_CPUS_PER_TASK:-1}"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+}
+
+fail() {
+    log "ERROR: $*"
+    exit 1
+}
+
+# ---------------------------------------------------------------
+# Environment
+# ---------------------------------------------------------------
+log "Job $SLURM_JOB_ID starting on $(hostname)"
+module purge
+module load example-python/3.12
+module load example-tools/2.4
+
+python -m venv "$SCRATCH_DIR/venv"
+source "$SCRATCH_DIR/venv/bin/activate"
+pip install --quiet --requirement "$PROJECT_DIR/requirements.txt"
+
+mkdir -p "$OUTPUT_DIR" "$SCRATCH_DIR/work" logs
+
+# ---------------------------------------------------------------
+# Check inputs before doing any work
+# ---------------------------------------------------------------
+for sample in "${SAMPLES[@]}"; do
+    if [[ ! -f "$INPUT_DIR/$sample.csv" ]]; then
+        fail "missing input file for $sample"
+    fi
+done
+log "All ${#SAMPLES[@]} input files found"
+
+# ---------------------------------------------------------------
+# Main loop: clean, analyze, and summarize each sample
+# ---------------------------------------------------------------
+for sample in "${SAMPLES[@]}"; do
+    log "Processing $sample"
+    work="$SCRATCH_DIR/work/$sample"
+    mkdir -p "$work"
+
+    cp "$INPUT_DIR/$sample.csv" "$work/raw.csv"
+
+    python "$PROJECT_DIR/scripts/clean.py" \
+        --input "$work/raw.csv" \
+        --output "$work/clean.csv" \
+        --drop-empty-rows \
+        || fail "cleaning failed for $sample"
+
+    python "$PROJECT_DIR/scripts/analyze.py" \
+        --input "$work/clean.csv" \
+        --output "$work/results.json" \
+        --threads "$THREADS" \
+        || fail "analysis failed for $sample"
+
+    python "$PROJECT_DIR/scripts/summarize.py" \
+        --input "$work/results.json" \
+        --output "$OUTPUT_DIR/$sample-summary.txt" \
+        || fail "summary failed for $sample"
+
+    log "Finished $sample"
+done
+
+# ---------------------------------------------------------------
+# Combine the summaries into one report
+# ---------------------------------------------------------------
+report="$OUTPUT_DIR/report.txt"
+{
+    echo "Pipeline report for job $SLURM_JOB_ID"
+    echo "Samples: ${SAMPLES[*]}"
+    echo
+    for sample in "${SAMPLES[@]}"; do
+        echo "== $sample =="
+        cat "$OUTPUT_DIR/$sample-summary.txt"
+        echo
+    done
+} > "$report"
+log "Report written to $report"
+
+# ---------------------------------------------------------------
+# Clean up scratch space and record what the job used
+# ---------------------------------------------------------------
+deactivate
+rm -rf "$SCRATCH_DIR"
+sacct --jobs "$SLURM_JOB_ID" --format=JobID,Elapsed,MaxRSS,State
+log "pipeline finished"
 ```
 
 The end.

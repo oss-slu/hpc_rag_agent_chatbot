@@ -22,13 +22,15 @@ LIBRA_HOST = "docs.libra.slu.edu"
 
 _HEADER = re.compile(r"^<!--\s*Source:\s*(\S+)\s*\|\s*Retrieved:\s*(.*?)\s*-->\s*$")
 _HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
-_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
+_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+_FENCE_CLOSE = re.compile(r"^ {0,3}(`{3,}|~{3,})[ \t]*$")
+_TABLE_DELIMITER = re.compile(r"^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$")
 _PERMALINK = re.compile(r"\[¶\]\([^)]*\)|¶")
 # Site navigation, header and footer text that the scraper can leave behind.
 _NAV_LINE = re.compile(
     r"^\s*(skip to content|back to top|table of contents|edit this page|legal notices"
     r"|previous|next|made with material for mkdocs.*|last modified.*"
-    r"|\[(previous|next)\b[^\]]*\]\([^)]*\))\s*$",
+    r"|\[(previous|next)\b[^\]]*\]\([^)]*\)|\[(skip to content|back to top)\]\([^)]*\))\s*$",
     re.IGNORECASE,
 )
 
@@ -89,6 +91,8 @@ def load_snapshot(path: str | Path) -> list[Page]:
             )
         url = match.group(1)
         slug = _slug(file.relative_to(root))
+        if slug in pages:
+            raise ValueError(f"{file}: another file already has the slug {slug!r}")
         pages[slug] = Page(slug, url, _title(text) or slug, source_for(url), text)
     return list(pages.values())
 
@@ -157,8 +161,24 @@ def _opens(line: str) -> str | None:
 
 
 def _closes(line: str, fence: str) -> bool:
-    text = line.strip()
-    return len(text) >= len(fence) and set(text) == {fence[0]}
+    """A closing fence: same character, at least as long, indented at most 3 spaces."""
+    match = _FENCE_CLOSE.match(line)
+    return bool(match) and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence)
+
+
+def _table_end(lines: list[str], i: int) -> int | None:
+    """If a table starts at line ``i``, return the index just past its last row."""
+    line = lines[i]
+    if "|" not in line:
+        return None
+    next_line = lines[i + 1] if i + 1 < len(lines) else ""
+    has_delimiter = "|" in next_line and _TABLE_DELIMITER.match(next_line)
+    if not (line.lstrip().startswith("|") or has_delimiter):
+        return None
+    end = i + 1
+    while end < len(lines) and lines[end].strip() and "|" in lines[end] and not _opens(lines[end]):
+        end += 1
+    return end
 
 
 def _sections(text: str, title: str) -> list[tuple[list[str], list[_Block]]]:
@@ -186,15 +206,12 @@ def _sections(text: str, title: str) -> list[tuple[list[str], list[_Block]]]:
             levels[level] = heading.group(2).strip()
             sections.append(([levels[k] for k in sorted(levels)], []))
             i += 1
-        elif line.lstrip().startswith("|"):
-            end = i
-            while end < len(lines) and lines[end].lstrip().startswith("|"):
-                end += 1
-            sections[-1][1].append(_Block("\n".join(lines[i:end]), atomic=True))
-            i = end
+        elif (table_end := _table_end(lines, i)) is not None:
+            sections[-1][1].append(_Block("\n".join(lines[i:table_end]), atomic=True))
+            i = table_end
         elif line.strip():
             end = i
-            while end < len(lines) and _is_prose(lines[end]):
+            while end < len(lines) and _is_prose(lines, end):
                 end += 1
             sections[-1][1].append(_Block("\n".join(lines[i:end]), atomic=False))
             i = end
@@ -203,22 +220,25 @@ def _sections(text: str, title: str) -> list[tuple[list[str], list[_Block]]]:
     return [(path, blocks) for path, blocks in sections if blocks]
 
 
-def _is_prose(line: str) -> bool:
+def _is_prose(lines: list[str], i: int) -> bool:
+    line = lines[i]
     heading = _HEADING.match(line)
     return (
         bool(line.strip())
         and not _opens(line)
-        and not line.lstrip().startswith("|")
         and not (heading and len(heading.group(1)) <= 3)
+        and _table_end(lines, i) is None
     )
 
 
 def _pack(blocks: list[_Block], budget: int) -> list[str]:
     """Join blocks into chunks of at most ``budget`` tokens, with a short overlap."""
+    # Long paragraphs are cut small enough that the overlap still fits in front.
+    piece_budget = budget - OVERLAP_TOKENS - 1
     pieces: list[_Block] = []
     for block in blocks:
         if not block.atomic and estimate_tokens(block.text) > budget:
-            pieces.extend(_Block(text, atomic=False) for text in _split_prose(block.text, budget))
+            pieces.extend(_Block(t, atomic=False) for t in _split_prose(block.text, piece_budget))
         else:
             pieces.append(block)
 
@@ -255,7 +275,8 @@ def _split_prose(text: str, budget: int) -> list[str]:
     limit = budget * 4
     words: list[str] = []
     for sentence in re.split(r"(?<=[.!?])\s+", text):
-        words.extend([sentence] if len(sentence) <= limit else sentence.split())
+        for word in [sentence] if len(sentence) <= limit else sentence.split():
+            words.extend(word[j : j + limit] for j in range(0, len(word), limit))
     parts, current = [], ""
     for word in words:
         if current and len(current) + 1 + len(word) > limit:
@@ -267,12 +288,15 @@ def _split_prose(text: str, budget: int) -> list[str]:
 
 
 def _last_words(text: str, limit: int) -> str:
+    """The last words of ``text``, at most ``limit`` characters."""
     kept: list[str] = []
+    size = -1
     for word in reversed(text.split()):
-        if kept and len(word) + 1 + sum(len(w) + 1 for w in kept) > limit:
+        size += len(word) + 1
+        if kept and size > limit:
             break
-        kept.insert(0, word)
-    return " ".join(kept)
+        kept.append(word)
+    return " ".join(reversed(kept))[-limit:]
 
 
 def _join(blocks: list[_Block]) -> str:
@@ -280,7 +304,9 @@ def _join(blocks: list[_Block]) -> str:
 
 
 def _size(blocks: list[_Block]) -> int:
-    return estimate_tokens(_join(blocks))
+    """Token estimate of the joined blocks, without building the string."""
+    chars = sum(len(block.text) for block in blocks) + 2 * (len(blocks) - 1)
+    return (max(chars, 0) + 3) // 4
 
 
 def main(argv: list[str] | None = None) -> int:

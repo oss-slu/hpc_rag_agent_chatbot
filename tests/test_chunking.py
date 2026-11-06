@@ -54,6 +54,15 @@ def test_missing_header_is_an_error(tmp_path):
         load_snapshot(tmp_path)
 
 
+def test_duplicate_slug_is_an_error(tmp_path):
+    header = "<!-- Source: https://example.edu/a/ | Retrieved: now -->\n# A\n"
+    (tmp_path / "a").mkdir()
+    (tmp_path / "a" / "b.md").write_text(header)
+    (tmp_path / "a-b.md").write_text(header)
+    with pytest.raises(ValueError, match="slug"):
+        load_snapshot(tmp_path)
+
+
 def test_empty_folder_is_an_error(tmp_path):
     with pytest.raises(FileNotFoundError):
         load_snapshot(tmp_path)
@@ -75,6 +84,11 @@ def test_clean_keeps_code_blocks_untouched():
     assert "next\n\n\n¶ keep" in clean(md)
 
 
+def test_clean_drops_linked_navigation():
+    md = "[Skip to content](#main)\n# T\n\nText\n\n[Back to top](#top)\n"
+    assert clean(md) == "# T\n\nText"
+
+
 def test_clean_collapses_blank_lines():
     assert clean("# T\n\n\n\nText\n") == "# T\n\nText"
 
@@ -87,6 +101,26 @@ def test_table_stays_intact(pages):
     table = [c for c in chunks if "| Queue |" in c.body]
     assert len(table) == 1
     assert all(row in table[0].body for row in ("| alpha |", "| beta |", "| gamma |"))
+
+
+def test_table_without_outer_pipes_stays_intact():
+    rows = "\n".join(f"row{i} | value{i}" for i in range(500))
+    chunks = split(page(f"# Doc\n\nKey | Value\n--- | ---\n{rows}\n\nAfter."))
+    [table] = [c for c in chunks if "Key | Value" in c.body]
+    assert "row0 | value0" in table.body and "row499 | value499" in table.body
+
+
+def test_horizontal_rule_is_not_a_table():
+    [chunk] = split(page("# Doc\n\nAbove\n\n---\n\nBelow | with a pipe"))
+    assert chunk.body == "Doc\n\nAbove\n\n---\n\nBelow | with a pipe"
+
+
+def test_indented_backticks_do_not_close_a_fence():
+    code = "\n".join(f"line {i}" for i in range(700))
+    md = f"# Doc\n\n```\nstart\n    ```\n## still code\n{code}\n```\n"
+    [chunk] = split(page(md))
+    assert chunk.heading == "Doc"
+    assert "## still code" in chunk.body and "line 699" in chunk.body
 
 
 def test_code_block_is_never_split(pages):
@@ -104,7 +138,9 @@ def test_heading_inside_code_block_is_not_a_split_point(pages):
 def test_oversized_code_block_kept_whole(pages):
     chunks = split(pages["reference-long-script"])
     [code] = [c for c in chunks if "```bash" in c.body]
-    assert "step 1:" in code.body and "step 80:" in code.body
+    assert "#SBATCH --job-name=example-pipeline" in code.body
+    assert 'log "pipeline finished"' in code.body
+    assert "# Settings" in code.body  # comment lines inside code are not headings
     assert code.tokens > chunking.MAX_TOKENS  # allowed: code is never cut
 
 
@@ -149,6 +185,14 @@ def test_long_prose_is_capped_with_overlap():
 def test_one_huge_paragraph_is_cut():
     md = "# Big\n\n" + " ".join(f"word{i}" for i in range(2000))
     chunks = split(page(md, title="Big"))
+    assert len(chunks) > 1
+    assert all(c.tokens <= chunking.MAX_TOKENS for c in chunks)
+    for a, b in zip(chunks, chunks[1:], strict=False):
+        assert " ".join(a.body.split()[-5:]) in b.body  # overlap survives the cut
+
+
+def test_one_huge_word_is_cut():
+    chunks = split(page("# Doc\n\n" + "x" * 10000))
     assert len(chunks) > 1
     assert all(c.tokens <= chunking.MAX_TOKENS for c in chunks)
 
