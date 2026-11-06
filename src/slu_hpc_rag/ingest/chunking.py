@@ -20,11 +20,11 @@ MAX_TOKENS = 800  # per chunk, heading path included
 OVERLAP_TOKENS = 100  # text repeated from the end of the previous chunk
 LIBRA_HOST = "docs.libra.slu.edu"
 
-_HEADER = re.compile(r"^<!--\s*Source:\s*(\S+)\s*\|\s*Retrieved:\s*(.*?)\s*-->\s*$")
-_HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
+_HEADER = re.compile(r"^<!--[ \t]*Source:[ \t]*([^\s|]+)[ \t]*\|[ \t]*Retrieved:[^>]*-->")
+_HEADING = re.compile(r"^(#{1,6})[ \t]+([^ \t].*)$")  # group 2 is stripped by callers
 _FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 _FENCE_CLOSE = re.compile(r"^ {0,3}(`{3,}|~{3,})[ \t]*$")
-_TABLE_DELIMITER = re.compile(r"^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$")
+_DELIMITER_CELL = re.compile(r":?-+:?")
 _PERMALINK = re.compile(r"\[¶\]\([^)]*\)|¶")
 # Site navigation, header and footer text that the scraper can leave behind.
 _NAV_LINE = re.compile(
@@ -175,13 +175,19 @@ def _table_end(lines: list[str], i: int) -> int | None:
     if "|" not in line:
         return None
     next_line = lines[i + 1] if i + 1 < len(lines) else ""
-    has_delimiter = "|" in next_line and _TABLE_DELIMITER.match(next_line)
+    has_delimiter = "|" in next_line and _is_delimiter_row(next_line)
     if not (line.lstrip().startswith("|") or has_delimiter):
         return None
     end = i + 1
     while end < len(lines) and _is_table_row(lines[end]):
         end += 1
     return end
+
+
+def _is_delimiter_row(line: str) -> bool:
+    """A table's ``--- | :---:`` row (split into cells instead of one big regex)."""
+    cells = line.strip().removeprefix("|").removesuffix("|").split("|")
+    return all(_DELIMITER_CELL.fullmatch(cell.strip()) for cell in cells)
 
 
 def _is_table_row(line: str) -> bool:
