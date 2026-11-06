@@ -54,6 +54,7 @@ Settings come from environment variables or `.env`. See
 | `DATABASE_URL`      | `postgresql://hpc:hpc@localhost:5432/hpc_rag` |
 | `CHAT_MODEL`        | `anthropic:claude-sonnet-5-5`    |
 | `CORS_ORIGINS`      | none (CORS disabled)             |
+| `TEMPERATURE`       | none (provider default; Claude Sonnet 5.5+ accepts no other value) |
 
 ## Contributing
 

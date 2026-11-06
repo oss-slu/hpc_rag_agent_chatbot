@@ -27,7 +27,8 @@ limits, paths or commands.
 
 
 def build_model(settings: Settings) -> BaseChatModel:
-    return init_chat_model(settings.chat_model, temperature=settings.temperature)
+    sampling = {} if settings.temperature is None else {"temperature": settings.temperature}
+    return init_chat_model(settings.chat_model, **sampling)
 
 
 def build_agent(model: BaseChatModel, tools: Sequence[BaseTool] = ()):
