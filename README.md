@@ -38,10 +38,28 @@ Run `make` on its own to see every command.
 
 ## API
 
-| Method | Path      | Purpose                                  |
-|--------|-----------|------------------------------------------|
-| GET    | `/health` | Liveness check                           |
-| POST   | `/ask`    | `{"question": "..."}` → `{"answer": "..."}` |
+| Method | Path        | Request                                         | Response |
+|--------|-------------|-------------------------------------------------|----------|
+| GET    | `/health`   |                                                 | `{"status": "ok", "version": ...}` |
+| POST   | `/ask`      | `{"question": "..."}`                           | `text/event-stream` (below) |
+| POST   | `/feedback` | `{"answer_id": "...", "rating": 1 \| -1, "comment": "..."}` (comment optional) | 204; 404 unknown id; 422 invalid input |
+
+`/ask` streams server-sent events, one `data: <json>` line each:
+
+```text
+data: {"type": "token", "text": "Use "}          # answer text, repeated while writing
+data: {"type": "done", "answer_id": "…", "sources": [{"title": "…", "url": "…"}], "findings": []}
+data: {"type": "error", "message": "The assistant is unavailable."}   # instead of done, on failure
+```
+
+Every answer is logged in the `answers` table (question, answer, sources, tool
+calls, model, latency and any rating). No usernames or IP addresses are stored.
+Pass `answer_id` from `done` to `/feedback` to rate it.
+
+```sh
+curl -N -X POST localhost:8000/ask -H 'Content-Type: application/json' \
+  -d '{"question": "How do I submit a batch job?"}'
+```
 
 ## Configuration
 
