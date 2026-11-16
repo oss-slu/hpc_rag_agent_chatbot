@@ -24,7 +24,7 @@ def scripted_model():
 def isolated_settings(monkeypatch):
     """Keep tests independent of a developer's real .env and environment."""
     monkeypatch.chdir("/")
-    for var in ("DATABASE_URL", "CHAT_MODEL", "CORS_ORIGINS", "TEMPERATURE"):
+    for var in ("DATABASE_URL", "CHAT_MODEL", "CORS_ORIGINS", "TEMPERATURE", "ANTHROPIC_API_KEY"):
         monkeypatch.delenv(var, raising=False)
     get_settings.cache_clear()
     yield

@@ -3,7 +3,7 @@ from slu_hpc_rag.config import get_settings
 
 def test_defaults_are_safe():
     s = get_settings()
-    assert s.temperature == 0.0
+    assert s.temperature is None  # Claude rejects non-default values
     assert s.cors_origins == []
 
 
