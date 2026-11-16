@@ -1179,6 +1179,7 @@ name = "slu-hpc-rag"
 version = "0.0.1"
 source = { editable = "." }
 dependencies = [
+    { name = "anyio" },
     { name = "fastapi" },
     { name = "langchain" },
     { name = "langchain-anthropic" },
@@ -1197,6 +1198,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anyio", specifier = ">=4" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "langchain", specifier = ">=1.0" },
     { name = "langchain-anthropic", specifier = ">=1.0" },

@@ -1,31 +1,19 @@
-import os
-
 import pytest
 
 from slu_hpc_rag import db
+
+MIGRATIONS = ["0001_documents.sql", "0002_answers.sql"]
 
 
 def test_migrations_are_ordered_and_named():
     names = [name for name, _ in db.migration_files()]
     assert names == sorted(names)
-    assert names[0] == "0001_documents.sql"
-
-
-@pytest.fixture
-def database_url():
-    url = os.environ.get("TEST_DATABASE_URL")
-    if not url:
-        pytest.skip("TEST_DATABASE_URL not set")
-    import psycopg
-
-    with psycopg.connect(url, autocommit=True) as conn:
-        conn.execute("DROP SCHEMA public CASCADE; CREATE SCHEMA public;")
-    return url
+    assert names == MIGRATIONS
 
 
 @pytest.mark.db
 def test_migrate_is_idempotent(database_url):
-    assert db.migrate(database_url) == ["0001_documents.sql"]
+    assert db.migrate(database_url) == MIGRATIONS
     assert db.migrate(database_url) == []
 
 
