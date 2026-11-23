@@ -1,5 +1,5 @@
 # Run `make` with no target to list commands.
-.PHONY: list setup check fmt test test-all db db-stop migrate serve image up down
+.PHONY: list setup check fmt test test-all db db-stop migrate serve site image up down
 
 list:
 	@awk -F':.*# ' '/^[a-z-]+:.*# /{printf "  %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -33,6 +33,9 @@ migrate: # apply database migrations
 
 serve: # run the API with auto-reload on :8000
 	uv run uvicorn slu_hpc_rag.main:app --reload
+
+site: # serve the project website on :8080
+	uv run python -m http.server 8080 --bind 127.0.0.1 --directory site
 
 image: # build the Docker image
 	docker compose build app

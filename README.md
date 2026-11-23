@@ -36,6 +36,12 @@ make serve      # http://localhost:8000/docs
 
 Run `make` on its own to see every command.
 
+## Project website
+
+`site/index.html` is a plain-language page explaining the project for people
+who don't use the cluster. It's a single static file with no build step.
+Run `make site` and open http://localhost:8080.
+
 ## API
 
 | Method | Path        | Request                                         | Response |
