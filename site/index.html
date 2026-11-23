@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SLU HPC Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@85..110,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Serif:ital,wght@0,400;1,400&display=swap">
+<style>
+/* Layout: navy "machine room" hero with a live node map, then light reading sections.
+   Color bands (navy, amber tint) mark the three moments: the pitch, the idea, the call to help. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #142033;
+  --muted: #4f5c6f;
+  --faint: #7a8696;
+  --line: #dce1e8;
+  --link: #1f4fbf;
+  --navy: #13233d;
+  --navy-deep: #0b1628;
+  --navy-line: #263b5e;
+  --on-navy: #e8edf5;
+  --on-navy-muted: #a2b2c9;
+  --amber: #f0a534;
+  --amber-text: #9a5800;
+  --amber-tint: #fbf1de;
+  --chip: #e9edf3;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --serif: "IBM Plex Serif", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c121a; --surface: #141c27; --ink: #e4e9f0; --muted: #a3aebd; --faint: #7f8a99;
+    --line: #253041; --link: #93b4ff; --navy: #13233d; --navy-deep: #0a1322; --navy-line: #263b5e;
+    --on-navy: #e8edf5; --on-navy-muted: #a2b2c9; --amber: #f0a534; --amber-text: #f2b34b;
+    --amber-tint: #241d10; --chip: #1c2634; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c121a; --surface: #141c27; --ink: #e4e9f0; --muted: #a3aebd; --faint: #7f8a99;
+  --line: #253041; --link: #93b4ff; --navy: #13233d; --navy-deep: #0a1322; --navy-line: #263b5e;
+  --on-navy: #e8edf5; --on-navy-muted: #a2b2c9; --amber: #f0a534; --amber-text: #f2b34b;
+  --amber-tint: #241d10; --chip: #1c2634; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.65; }
+a { color: var(--link); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+p { margin: 0; }
+h1, h2, h3 { margin: 0; text-wrap: balance; font-family: var(--display); }
+h2 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); font-weight: 700; font-stretch: 100%; line-height: 1.15; letter-spacing: -0.01em; }
+h3 { font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--chip); padding: 1px 5px; border-radius: 3px; }
+
+.wrap {
+  max-width: 1080px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.sec { padding-block: 72px; }
+.sec-head { display: grid; gap: 12px; max-width: 680px; margin-bottom: 40px; }
+.sec-head p { color: var(--muted); font-size: 1.08rem; }
+
+/* ---------- hero band ---------- */
+.band-navy { background: var(--navy); color: var(--on-navy); }
+.topbar .wrap { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; padding-block: 18px; }
+.name { font-family: var(--display); font-weight: 700; font-size: 1.05rem; color: var(--on-navy); text-decoration: none; }
+.name span { color: var(--amber); }
+.topnav { display: flex; gap: 22px; flex-wrap: wrap; font-size: 0.92rem; }
+.topnav a { color: var(--on-navy-muted); text-decoration: none; }
+.topnav a:hover { color: var(--on-navy); }
+
+.hero { padding-block: 44px 0; }
+.hero h1 { font-size: clamp(2.3rem, 5.3vw, 3.9rem); font-weight: 700; font-stretch: 100%; line-height: 1.06; letter-spacing: -0.02em; max-width: 19ch; }
+.hero h1 em { font-style: normal; color: var(--amber); }
+.hero-body { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.1fr); gap: 52px; margin-top: 36px; align-items: start; }
+.hero-text { display: grid; gap: 18px; max-width: 52ch; }
+.hero-text .lead { font-size: 1.15rem; }
+.hero-text p { color: var(--on-navy-muted); }
+.hero-text .lead { color: var(--on-navy); }
+.hero-text .note { font-size: 0.88rem; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.btn { display: inline-block; padding: 11px 18px; border-radius: 5px; font-weight: 600; text-decoration: none; font-size: 0.98rem; }
+.btn-amber { background: var(--amber); color: #1c1405; }
+.btn-amber:hover { background: #ffb94f; }
+.btn-line { border: 1px solid var(--navy-line); color: var(--on-navy); }
+.btn-line:hover { border-color: var(--on-navy-muted); }
+
+/* demo console */
+.demo { background: var(--navy-deep); border: 1px solid var(--navy-line); border-radius: 8px; min-width: 0; color: var(--on-navy); }
+.demo-tabs { display: flex; gap: 4px 18px; flex-wrap: wrap; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid var(--navy-line); font-size: 0.88rem; }
+.demo-tabs span { color: var(--on-navy-muted); }
+.q-tab { font: inherit; background: none; border: 0; padding: 2px 0; color: var(--on-navy-muted); cursor: pointer; border-bottom: 2px solid transparent; }
+.q-tab:hover { color: var(--on-navy); }
+.q-tab[aria-selected="true"] { color: var(--on-navy); border-bottom-color: var(--amber); }
+.chat { padding: 18px 16px; display: grid; gap: 14px; min-height: 300px; align-content: start; }
+.msg-label { font-family: var(--mono); font-size: 0.72rem; color: var(--on-navy-muted); margin-bottom: 3px; }
+.msg-q { font-weight: 500; }
+.msg-a { min-width: 0; }
+.demo code { background: #18294a; color: #ffcf85; }
+.caret { display: inline-block; width: 7px; height: 1em; background: var(--amber); vertical-align: -2px; margin-left: 1px; animation: blink 1s steps(1) infinite; }
+.sources { font-size: 0.86rem; color: var(--on-navy-muted); border-top: 1px solid var(--navy-line); padding-top: 12px; }
+.sources b { color: #a9c3ff; font-weight: 500; overflow-wrap: anywhere; }
+.rate { display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--on-navy-muted); }
+.rate button { font: inherit; background: transparent; border: 1px solid var(--navy-line); color: var(--on-navy); border-radius: 4px; padding: 2px 10px; cursor: pointer; }
+.rate button[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: #1c1405; }
+.demo-foot { padding: 10px 16px; border-top: 1px solid var(--navy-line); font-size: 0.78rem; color: var(--on-navy-muted); }
+
+/* node map */
+.nodes { margin-top: 56px; padding-bottom: 28px; }
+.nodes canvas { display: block; width: 100%; height: 64px; }
+.nodes-key { display: flex; gap: 6px 20px; flex-wrap: wrap; margin-top: 10px; font-size: 0.8rem; color: var(--on-navy-muted); }
+.nodes-key i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+
+/* ---------- why ---------- */
+.why { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 52px; align-items: start; }
+.prose { display: grid; gap: 18px; max-width: 60ch; }
+.prose p { color: var(--muted); }
+.prose strong { color: var(--ink); font-weight: 600; }
+.script { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; min-width: 0; }
+.script-head { padding: 9px 16px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 0.76rem; color: var(--faint); }
+.script pre { margin: 0; padding: 16px; overflow-x: auto; font-family: var(--mono); font-size: 0.85rem; line-height: 1.75; }
+.script .k { color: var(--amber-text); }
+.script .c { color: var(--faint); }
+.script-note { padding: 12px 16px; border-top: 1px solid var(--line); font-size: 0.9rem; color: var(--muted); }
+
+/* ---------- idea band ---------- */
+.band-amber { background: var(--amber-tint); }
+.idea { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 52px; align-items: center; }
+.idea blockquote { margin: 0; font-family: var(--serif); font-size: clamp(1.5rem, 3vw, 2.05rem); line-height: 1.3; color: var(--ink); }
+.idea .prose p { color: var(--muted); }
+
+/* ---------- pipeline ---------- */
+.phase { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px; }
+.phase + .phase { margin-top: 44px; }
+.phase-label h3 { font-size: 1.2rem; }
+.phase-label p { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
+.track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; position: relative; }
+.track::before { content: ""; position: absolute; top: 16px; left: 16px; right: 16px; height: 2px; background: var(--line); }
+.track li { position: relative; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.dot {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; position: relative;
+  font-family: var(--display); font-weight: 700; font-size: 0.95rem; background: var(--navy); color: var(--on-navy);
+  box-shadow: 0 0 0 5px var(--bg); margin-bottom: 6px;
+}
+.track.ask .dot { background: var(--amber); color: #1c1405; }
+.track li p { color: var(--muted); font-size: 0.95rem; }
+.eg { font-family: var(--mono); font-size: 0.78rem; background: var(--chip); padding: 6px 10px; border-radius: 5px; justify-self: start; overflow-wrap: anywhere; }
+.two-way { display: grid; gap: 8px; }
+.two-way div { background: var(--chip); border-radius: 5px; padding: 8px 10px; font-size: 0.84rem; color: var(--muted); }
+.two-way b { color: var(--ink); font-weight: 600; }
+.asks { margin: 36px 0 0 228px; display: flex; gap: 12px; align-items: center; color: var(--muted); font-size: 0.95rem; }
+.asks span { font-family: var(--serif); font-style: italic; color: var(--ink); }
+
+/* ---------- trust ---------- */
+.points { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 36px; }
+.points li { border-top: 2px solid var(--ink); padding-top: 14px; color: var(--muted); font-size: 0.96rem; }
+.points strong { display: block; font-family: var(--display); font-size: 1.08rem; color: var(--ink); margin-bottom: 4px; }
+
+/* ---------- glossary ---------- */
+.gloss { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 40px; }
+dl.terms { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 12px 28px; max-width: 760px; }
+dl.terms dt { font-weight: 600; }
+dl.terms dd { margin: 0; color: var(--muted); }
+
+/* ---------- status ---------- */
+.progress { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 18px; }
+.progress span { height: 10px; border-radius: 2px; }
+.progress .p-done { background: var(--navy); }
+.progress .p-now { background: linear-gradient(90deg, var(--amber) 50%, var(--line) 50%); }
+.progress .p-next { background: var(--line); }
+.stages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 28px; }
+.stage h3 { font-size: 1rem; }
+.stage .tag { font-family: var(--mono); font-size: 0.74rem; color: var(--faint); }
+.stage ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 0.94rem; display: grid; gap: 4px; }
+
+/* ---------- join ---------- */
+.join { padding-block: 56px; }
+.join .wrap { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+.join h2 { color: var(--on-navy); }
+.join p { color: var(--on-navy-muted); margin-top: 8px; max-width: 58ch; }
+footer { background: var(--navy-deep); color: var(--on-navy-muted); font-size: 0.85rem; padding-block: 22px 32px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap; }
+
+@keyframes blink { 50% { opacity: 0; } }
+
+@media (max-width: 880px) {
+  .hero-body, .why, .idea { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+  .phase, .gloss { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .asks { margin-left: 0; }
+  .points { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .sec { padding-block: 52px; }
+  .topnav { display: none; }
+  .track { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .track::before { top: 16px; bottom: 16px; left: 16px; right: auto; width: 2px; height: auto; }
+  .track li { padding-left: 52px; }
+  .dot { position: absolute; left: 0; top: 0; margin: 0; }
+  .points { grid-template-columns: minmax(0, 1fr); }
+  dl.terms { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  dl.terms dd { margin-bottom: 12px; }
+  .progress, .stages { grid-template-columns: minmax(0, 1fr); }
+  .progress { display: none; }
+  .stage { border-left: 4px solid var(--line); padding-left: 14px; }
+  .stage.s-done { border-left-color: var(--navy); }
+  .stage.s-now { border-left-color: var(--amber); }
+  .stages { gap: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .caret { animation: none; } }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="band-navy">
+  <header class="topbar">
+    <div class="wrap">
+      <a class="name" href="#top">SLU HPC <span>Assistant</span></a>
+      <nav class="topnav" aria-label="Sections">
+        <a href="#why">Why</a>
+        <a href="#how">How it works</a>
+        <a href="#trust">Accuracy and privacy</a>
+        <a href="#status">Status</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" id="top">
+    <div class="wrap">
+      <h1>Answers about SLU's supercomputer, <em>straight from its documentation.</em></h1>
+      <div class="hero-body">
+        <div class="hero-text">
+          <p class="lead">The SLU HPC Assistant is a question-and-answer tool for researchers who use Saint Louis University's high-performance computing cluster. Ask in plain English, and it answers from the official documentation with a link to the page it used.</p>
+          <p>If the documentation doesn't cover your question, it tells you so instead of making something up.</p>
+          <div class="actions">
+            <a class="btn btn-amber" href="#how">How it works</a>
+            <a class="btn btn-line" href="https://github.com/oss-slu/hpc_rag_agent_chatbot">Source on GitHub</a>
+          </div>
+          <p class="note">Open source and in early development. The examples here show how it is designed to work.</p>
+        </div>
+
+        <div class="demo" aria-label="Example conversation">
+          <div class="demo-tabs" role="tablist" aria-label="Example questions">
+            <span>Try:</span>
+            <button class="q-tab" role="tab" aria-selected="true" data-i="0">Submitting a job</button>
+            <button class="q-tab" role="tab" aria-selected="false" data-i="1">A job that won't start</button>
+            <button class="q-tab" role="tab" aria-selected="false" data-i="2">Not in the docs</button>
+          </div>
+          <div class="chat" role="tabpanel" aria-live="polite">
+            <div>
+              <div class="msg-label">you asked</div>
+              <div class="msg-q" id="q-text">How do I submit a batch job?</div>
+            </div>
+            <div>
+              <div class="msg-label">assistant</div>
+              <div class="msg-a" id="a-text">Write a short job script whose first lines start with <code>#SBATCH</code> and describe what you need, such as run time, CPUs and memory. Then hand it to the scheduler with <code>sbatch myjob.sh</code>. You can check its place in line with <code>squeue -u $USER</code>.</div>
+            </div>
+            <div class="sources" id="sources">Source: <b id="src">HPC User Guide › Running jobs › Batch jobs</b></div>
+            <div class="rate" id="rate">
+              <span>Was this helpful?</span>
+              <button type="button" id="rate-up" aria-pressed="false">Yes</button>
+              <button type="button" id="rate-down" aria-pressed="false">No</button>
+            </div>
+          </div>
+          <div class="demo-foot">Example only. Real answers link to the SLU documentation page they used.</div>
+        </div>
+      </div>
+
+      <div class="nodes" aria-hidden="true">
+        <canvas id="node-map"></canvas>
+        <div class="nodes-key">
+          <span><i style="background:#f0a534"></i>running a job</span>
+          <span><i style="background:#3d5a88"></i>idle</span>
+          <span>Illustration: a cluster is many computers ("nodes") shared by everyone, each running someone's work.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<main>
+  <section class="sec" id="why">
+    <div class="wrap why">
+      <div class="prose">
+        <h2>Powerful, shared, and hard to get started with</h2>
+        <p>A <strong>high-performance computing (HPC) cluster</strong> is a large group of powerful computers that the whole university shares. Biologists use it to analyze DNA, physicists to run simulations, social scientists to process large datasets. Work that would take a laptop months can finish in hours.</p>
+        <p>Using it is not like using a laptop. You write a short <strong>job script</strong> that says what to run and how much computing power you need, then submit it to a scheduler that runs it when room opens up. Getting that script right means reading long technical documentation, and many researchers have never worked at a command line.</p>
+        <p>The answer to most questions is already in the documentation. The hard part is finding the right paragraph. A wrong setting can leave a job waiting for hours or make it fail after it starts, and support staff end up answering the same questions over and over.</p>
+      </div>
+      <div class="script">
+        <div class="script-head">myjob.sh</div>
+<pre><span class="k">#!/bin/bash</span>
+<span class="k">#SBATCH</span> --job-name=protein-fold
+<span class="k">#SBATCH</span> --time=04:00:00      <span class="c"># how long it may run</span>
+<span class="k">#SBATCH</span> --cpus-per-task=8    <span class="c"># how many processors</span>
+<span class="k">#SBATCH</span> --mem=32G            <span class="c"># how much memory</span>
+
+module load python
+python fold.py input.fasta</pre>
+        <div class="script-note">A typical job script. Every line has options and limits specific to SLU's cluster, and the assistant helps people get them right the first time.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec band-amber">
+    <div class="wrap idea">
+      <blockquote>Think of it as an open-book exam where the student has to cite the page.</blockquote>
+      <div class="prose">
+        <p>General-purpose AI chatbots answer from what they absorbed during training. They write fluently, but they can state a command or a limit that doesn't exist, and on a shared cluster a wrong detail costs real time.</p>
+        <p>This assistant uses <strong>retrieval-augmented generation</strong>, or RAG. Before it answers, it searches SLU's own documentation for the sections that match your question, writes its answer from those sections only, and lists them as sources.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>How it works</h2>
+        <p>Part of the work happens ahead of time, so the documentation is ready to search. The rest happens in the seconds after you ask.</p>
+      </div>
+
+      <div class="phase">
+        <div class="phase-label">
+          <h3>Preparing the docs</h3>
+          <p>Runs in the background on a schedule.</p>
+        </div>
+        <ol class="track">
+          <li><span class="dot">1</span><h3>Fetch the official guide</h3><p>A scheduled job downloads SLU's HPC documentation. If nothing has changed since last time, it stops here.</p></li>
+          <li><span class="dot">2</span><h3>Split it into sections</h3><p>The guide is divided at its headings, so each piece covers one topic and remembers where it came from.</p><span class="eg">Jobs › GPU partitions</span></li>
+          <li><span class="dot">3</span><h3>Index each section</h3><p>Each section is stored with an embedding, a numeric summary of its meaning, plus an ordinary word index.</p></li>
+        </ol>
+      </div>
+
+      <p class="asks">Then someone asks: <span>"Why hasn't my job started?"</span></p>
+
+      <div class="phase">
+        <div class="phase-label">
+          <h3>Answering</h3>
+          <p>Takes a few seconds.</p>
+        </div>
+        <ol class="track ask">
+          <li><span class="dot">4</span><h3>Search two ways</h3>
+            <div class="two-way">
+              <div><b>By meaning:</b> "hasn't started" finds the section on pending jobs.</div>
+              <div><b>By exact words:</b> catches specific terms like <code>--gres</code> or a partition name.</div>
+            </div>
+          </li>
+          <li><span class="dot">5</span><h3>Write the answer</h3><p>Claude, an AI model made by Anthropic, reads the matching sections and answers from them. It is told never to guess at limits, file paths or commands.</p></li>
+          <li><span class="dot">6</span><h3>Show the sources</h3><p>The answer appears as it's written, followed by links to the sections it used. You can mark it helpful or not.</p></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="trust" style="padding-top: 24px">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Accuracy and privacy</h2>
+      </div>
+      <ul class="points">
+        <li><strong>One source of truth</strong>Answers come from SLU's published cluster documentation, not the open internet.</li>
+        <li><strong>Sources on every answer</strong>Open the original page and check any answer yourself.</li>
+        <li><strong>Admits gaps</strong>If the documentation doesn't cover something, it says so and suggests contacting SLU Research Computing.</li>
+        <li><strong>No personal data</strong>Questions and answers are logged to improve the tool. Usernames and IP addresses are not stored.</li>
+        <li><strong>Tested on real questions</strong>Answers rated unhelpful go into a test set that every future change is checked against.</li>
+        <li><strong>Kept current</strong>When the documentation changes, it is re-indexed, so answers follow the current rules.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec" style="padding-top: 24px">
+    <div class="wrap gloss">
+      <h2>Terms on this page</h2>
+      <dl class="terms">
+        <dt>HPC</dt><dd>High-performance computing: many powerful computers working together on problems too big for one machine.</dd>
+        <dt>Cluster</dt><dd>The shared group of computers itself.</dd>
+        <dt>Node</dt><dd>One computer in the cluster.</dd>
+        <dt>Job</dt><dd>One piece of work submitted to the cluster, described in a job script.</dd>
+        <dt>Slurm</dt><dd>The scheduler that decides which jobs run where and when. <code>sbatch</code> and <code>squeue</code> are two of its commands.</dd>
+        <dt>RAG</dt><dd>Retrieval-augmented generation: an AI looks up trusted documents before it writes an answer.</dd>
+        <dt>Embedding</dt><dd>A list of numbers representing what a passage means, so passages about the same idea can be found even when the wording differs.</dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="sec" id="status" style="padding-top: 24px">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Project status</h2>
+      </div>
+      <div class="progress" aria-hidden="true"><span class="p-done"></span><span class="p-now"></span><span class="p-next"></span></div>
+      <div class="stages">
+        <div class="stage s-done">
+          <span class="tag">Done</span>
+          <h3>The foundation</h3>
+          <ul>
+            <li>Web service that streams answers as they're written</li>
+            <li>Answer log and one-click feedback</li>
+            <li>Database for the documentation index</li>
+          </ul>
+        </div>
+        <div class="stage s-now">
+          <span class="tag">In progress</span>
+          <h3>Reading the documentation</h3>
+          <ul>
+            <li>Fetching and splitting the guide</li>
+            <li>Search by meaning and by exact words</li>
+          </ul>
+        </div>
+        <div class="stage">
+          <span class="tag">Next</span>
+          <h3>Into researchers' hands</h3>
+          <ul>
+            <li>Testing answers against real questions</li>
+            <li>Opening it to people who use the cluster</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band-navy join">
+    <div class="wrap">
+      <div>
+        <h2>Help build it</h2>
+        <p>The project is developed in the open by the oss-slu community under the MIT license. Code, testing, and examples of questions you wish the docs answered faster are all welcome.</p>
+      </div>
+      <a class="btn btn-amber" href="https://github.com/oss-slu/hpc_rag_agent_chatbot">Contribute on GitHub</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>SLU HPC Assistant · oss-slu · MIT license</span>
+    <span>The cluster documentation is published by SLU Research Computing.</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  /* ---------- example conversation ---------- */
+  var examples = [
+    {
+      q: "How do I submit a batch job?",
+      a: [["t","Write a short job script whose first lines start with "],["c","#SBATCH"],["t"," and describe what you need, such as run time, CPUs and memory. Then hand it to the scheduler with "],["c","sbatch myjob.sh"],["t",". You can check its place in line with "],["c","squeue -u $USER"],["t","."]],
+      src: "HPC User Guide › Running jobs › Batch jobs"
+    },
+    {
+      q: "My job has been PENDING for an hour. Why?",
+      a: [["t","Run "],["c","squeue -u $USER"],["t"," and look at the REASON column. "],["c","Priority"],["t"," means other jobs are ahead of yours. "],["c","Resources"],["t"," means the cluster is busy and your job will start when space frees up. Requesting less time or memory can help it start sooner."]],
+      src: "HPC User Guide › Running jobs › Pending jobs"
+    },
+    {
+      q: "Can I install Microsoft Office on the cluster?",
+      a: [["t","I couldn't find anything about that in the SLU cluster documentation, so I can't give you a reliable answer. SLU Research Computing can tell you what software is available and how to request something new."]],
+      src: null
+    }
+  ];
+
+  var qEl = document.getElementById("q-text");
+  var aEl = document.getElementById("a-text");
+  var srcWrap = document.getElementById("sources");
+  var srcEl = document.getElementById("src");
+  var rate = document.getElementById("rate");
+  var up = document.getElementById("rate-up");
+  var down = document.getElementById("rate-down");
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".q-tab"));
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var timer = null;
+
+  function tokens(ex) {
+    var out = [];
+    ex.a.forEach(function (seg) {
+      if (seg[0] === "c") { out.push(seg); return; }
+      seg[1].split(/(\s+)/).forEach(function (w) { if (w) out.push(["t", w]); });
+    });
+    return out;
+  }
+  function append(tok, before) {
+    var node;
+    if (tok[0] === "c") { node = document.createElement("code"); node.textContent = tok[1]; }
+    else { node = document.createTextNode(tok[1]); }
+    aEl.insertBefore(node, before || null);
+  }
+  function show(i) {
+    var ex = examples[i];
+    clearTimeout(timer);
+    tabs.forEach(function (t, j) { t.setAttribute("aria-selected", j === i ? "true" : "false"); });
+    up.setAttribute("aria-pressed", "false"); down.setAttribute("aria-pressed", "false");
+    qEl.textContent = ex.q;
+    srcEl.textContent = ex.src || "none found in the documentation";
+    aEl.innerHTML = "";
+    var toks = tokens(ex);
+    if (reduce) { toks.forEach(function (t) { append(t); }); return; }
+    srcWrap.hidden = true; rate.hidden = true;
+    var caret = document.createElement("span"); caret.className = "caret";
+    aEl.appendChild(caret);
+    var k = 0;
+    (function step() {
+      if (k >= toks.length) { caret.remove(); srcWrap.hidden = false; rate.hidden = false; return; }
+      append(toks[k++], caret);
+      timer = setTimeout(step, 30);
+    })();
+  }
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(Number(t.getAttribute("data-i"))); }); });
+  [up, down].forEach(function (b) {
+    b.addEventListener("click", function () {
+      var on = b.getAttribute("aria-pressed") !== "true";
+      up.setAttribute("aria-pressed", "false"); down.setAttribute("aria-pressed", "false");
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  });
+
+  /* ---------- node map ---------- */
+  var canvas = document.getElementById("node-map");
+  var ctx = canvas.getContext("2d");
+  var CELL = 9, GAP = 4, ROWS = 4;
+  var cols = 0, state = [];
+  var seed = 7;
+  function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+  function layout() {
+    var w = canvas.clientWidth, dpr = window.devicePixelRatio || 1;
+    var h = ROWS * (CELL + GAP) - GAP + 8;
+    canvas.style.height = h + "px";
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var newCols = Math.max(1, Math.floor((w + GAP) / (CELL + GAP)));
+    while (state.length < newCols * ROWS) state.push(rand() < 0.62);
+    cols = newCols;
+    draw();
+  }
+  function draw() {
+    var w = canvas.clientWidth;
+    ctx.clearRect(0, 0, w, canvas.height);
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < cols; c++) {
+        var on = state[r * cols + c];
+        ctx.fillStyle = on ? "#f0a534" : "#3d5a88";
+        ctx.globalAlpha = on ? 1 : 0.55;
+        ctx.fillRect(c * (CELL + GAP), 4 + r * (CELL + GAP), CELL, CELL);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  layout();
+  window.addEventListener("resize", layout);
+  if (!reduce) {
+    setInterval(function () {
+      for (var n = 0; n < 3; n++) {
+        var i = Math.floor(rand() * cols * ROWS);
+        state[i] = !state[i];
+      }
+      draw();
+    }, 700);
+  }
+})();
+</script>
+</body>
+</html>
