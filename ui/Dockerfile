@@ -13,7 +13,7 @@ WORKDIR /srv
 COPY --from=build --chown=app /srv/.venv /srv/.venv
 # The UI needs only the event format from the backend package.
 COPY src/slu_hpc_rag/__init__.py src/slu_hpc_rag/contracts.py src/slu_hpc_rag/stream.py ./src/slu_hpc_rag/
-COPY ui/__init__.py ui/app.py ui/client.py ./ui/
+COPY ui/*.py ui/style.css ./ui/
 COPY ui/assets/ ./ui/assets/
 COPY .streamlit/config.toml ./.streamlit/
 ENV PATH=/srv/.venv/bin:$PATH PYTHONPATH=/srv/src:/srv PYTHONUNBUFFERED=1 \

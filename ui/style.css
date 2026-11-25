@@ -1,0 +1,145 @@
+/* Styling the theme (.streamlit/config.toml) can't do.
+
+   Streamlit gives an element the class "st-key-<key>" when it's created with
+   key="<key>", so most rules below start with one of those keys (see
+   sidebar.py, welcome.py and app.py). The rest use Streamlit's own
+   data-testid names; if a Streamlit update renames them, that rule stops
+   applying but the page still works.
+
+   style.py sets two variables before this file:
+     --logo-background  the light blue circle behind the logo
+     --small-logo       the 64px logo, as an image url
+*/
+
+/* Logo: a light blue circle behind BilliBot so it stands out on white. */
+.st-key-sidebar_logo img,
+.st-key-welcome img,
+[data-testid="stChatMessageAvatarImage"] {
+    background: var(--logo-background);
+    border-radius: 50%;
+}
+.st-key-sidebar_logo img { padding: 8px; }
+.st-key-welcome img { padding: 16px; }
+
+/* Title: "BilliBot" with its subtitle right under it. Streamlit spaces
+   elements 1rem apart and pulls text back up by 1rem; undo both here. */
+.st-key-app_title { gap: 0; }
+.st-key-app_title h3 { padding-bottom: 0; }
+.st-key-app_title [data-testid="stMarkdownContainer"] { margin-bottom: 0; }
+
+/* Welcome screen: some space above, and a centered SLU-blue greeting. */
+.st-key-welcome { margin-top: 8vh; }
+.st-key-welcome h2 { text-align: center; color: #003DA5; font-weight: 600; }
+
+/* Example-question cards: blue icon on top, question below, left-aligned. */
+.st-key-example_questions button {
+    min-height: 136px;
+    padding: 1rem;
+    align-items: flex-start;
+}
+.st-key-example_questions button > div,
+.st-key-example_questions button > div > span { width: 100%; }  /* content at the left */
+.st-key-example_questions button > div > span {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.st-key-example_questions button * {  /* wrap long questions, don't cut them off */
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    text-align: left;
+}
+.st-key-example_questions [data-testid="stIconMaterial"] { color: #003DA5; font-size: 1.5rem; }
+.st-key-example_questions button:hover { background: #F2F6FC; border-color: #003DA5; }
+
+/* Narrow space (phone, tablet, or a small window with the sidebar open):
+   show the cards 2 x 2 instead of 4 in a row. This checks the width of
+   the cards' own area, not the screen, so the sidebar is accounted for. */
+.st-key-example_questions { container-type: inline-size; }
+@container (max-width: 640px) {
+    .st-key-example_questions [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
+    .st-key-example_questions [data-testid="stColumn"] {
+        flex: 0 0 calc(50% - 0.5rem);
+        min-width: calc(50% - 0.5rem);
+    }
+    .st-key-example_questions button { min-height: 112px; }
+}
+
+/* Phones: less space above the welcome and a smaller greeting,
+   so the whole welcome screen fits without scrolling. */
+@media (max-width: 640px) {
+    .st-key-welcome { margin-top: 0; }
+    .st-key-welcome h2 { font-size: 1.5rem; }
+}
+
+/* User messages: a gray bubble on the right, sized to the text, no icon.
+   (Streamlit labels each message "Chat message from user/assistant".) */
+[data-testid="stChatMessage"]:has([aria-label="Chat message from user"]) {
+    width: fit-content;
+    max-width: 80%;
+    margin-left: auto;
+    padding: 0.5rem 1rem;
+    border-radius: 1.25rem;
+}
+[data-testid="stChatMessage"]:has([aria-label="Chat message from user"])
+    [data-testid^="stChatMessageAvatar"] { display: none; }
+
+/* Sidebar "New chat" and search: same height and corners, so they match.
+   The button's icon and text sit at the left. The search box is a soft
+   gray with no border until it's clicked. */
+.st-key-new_chat button {
+    min-height: 40px;
+    border-radius: 10px;
+    padding-left: 14px;
+    font-weight: 600;
+}
+.st-key-new_chat button > div { justify-content: flex-start; }
+.st-key-search_chats [data-testid="stTextInputRootElement"] {
+    min-height: 40px;
+    border-radius: 10px;
+    background: #EEF2F7;
+    border-color: transparent;
+}
+.st-key-search_chats [data-testid="stTextInputRootElement"]:focus-within {
+    border-color: #003DA5;
+    background: #FFFFFF;
+}
+
+/* Sidebar chat list: compact rows. Every row has the same padding, so the
+   text never shifts; the open chat (a "secondary" button) just gets a
+   light blue background. */
+.st-key-chat_list { gap: 2px; }
+.st-key-chat_list button {
+    min-height: 0;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+}
+.st-key-chat_list button:hover { background: #EEF2F7; }
+.st-key-chat_list [data-testid="stBaseButton-secondary"] {
+    background: var(--logo-background);
+    color: #003DA5;
+}
+.st-key-chat_list button > div { justify-content: flex-start; width: 100%; }
+.st-key-chat_list button p {  /* one line per chat; long titles end in "…" */
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Prompt box: fully rounded ends, the small logo on the left,
+   and a send arrow that points right. */
+[data-testid="stChatInput"] > div > div::before {
+    content: "";
+    flex-shrink: 0;
+    align-self: center;
+    width: 32px;  /* same size and edge gap as the send button */
+    height: 32px;
+    background: var(--small-logo) center / 24px no-repeat var(--logo-background);
+    border-radius: 50%;
+}
+[data-testid="stChatInput"] > div { border-radius: 1.75rem; }
+[data-testid="stChatInputSubmitButton"] { border-radius: 50%; }
+[data-testid="stChatInputSubmitButton"] svg { transform: rotate(90deg); }
