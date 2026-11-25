@@ -5,7 +5,8 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 WORKDIR /srv
 COPY pyproject.toml uv.lock ./
 # Only the ui group: Streamlit, httpx and pydantic, not the backend's dependencies.
-RUN uv sync --locked --only-group ui --no-install-project
+# --no-build: install only prebuilt wheels, so no package's setup code runs.
+RUN uv sync --locked --only-group ui --no-install-project --no-build
 
 FROM python:3.12-slim
 RUN useradd --create-home --uid 10001 app
