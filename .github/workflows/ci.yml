@@ -8,9 +8,23 @@ on:
 permissions:
   contents: read
 
+# A new push to the same PR cancels the run that is still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  data-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: No SLU docs, snapshots, data or secrets in this public repo
+        run: bash scripts/check-no-slu-data.sh
+
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: pgvector/pgvector:pg17
@@ -30,7 +44,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - run: uv sync --locked
+      # All dependency groups: the UI tests need Streamlit from the "ui" group.
+      # --no-build: install only prebuilt wheels, so no package's setup code runs.
+      - run: uv sync --locked --all-groups --no-build
       - name: Lint and format
         run: |
           uv run ruff check .
@@ -40,6 +56,11 @@ jobs:
 
   image:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t slu-hpc-rag:ci .
+      - name: API image
+        run: docker build -t slu-hpc-rag:ci .
+      - name: Chat UI image
+        if: hashFiles('ui/Dockerfile') != ''  # once the UI is on main
+        run: docker build -f ui/Dockerfile -t slu-hpc-rag-ui:ci .
