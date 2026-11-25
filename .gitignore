@@ -11,7 +11,8 @@ dist/
 
 # SLU data stays local: scraped docs, snapshots and dumps never go in this
 # public repo (CI's data-guard job enforces this).
-data/
+/data/
 *.zip
-# Local planning notes
+# Personal notes and planning docs stay local
 docs/
+notes/

@@ -44,7 +44,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-      - run: uv sync --locked
+      # All dependency groups: the UI tests need Streamlit from the "ui" group.
+      - run: uv sync --locked --all-groups
       - name: Lint and format
         run: |
           uv run ruff check .
@@ -57,4 +58,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t slu-hpc-rag:ci .
+      - name: API image
+        run: docker build -t slu-hpc-rag:ci .
+      - name: Chat UI image
+        if: hashFiles('ui/Dockerfile') != ''  # once the UI is on main
+        run: docker build -f ui/Dockerfile -t slu-hpc-rag-ui:ci .
