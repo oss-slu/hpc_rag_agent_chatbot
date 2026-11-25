@@ -43,6 +43,6 @@ class Finding(BaseModel):
 
     severity: Severity
     rule: str  # stable id, e.g. "gpu-on-cpu-partition"
-    line: int | None = Field(ge=1)  # 1-based line in the script; None for the whole script
+    line: int | None = Field(default=None, ge=1)  # 1-based line; None = whole script
     message: str  # one sentence for the user
     doc_url: str | None = None  # documentation page that explains the rule

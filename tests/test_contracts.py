@@ -50,6 +50,12 @@ def test_contract_values_are_checked():
     assert Finding(**{**FINDING.model_dump(), "line": None}).line is None  # whole script
 
 
+def test_finding_line_can_be_left_out():
+    # A problem with the whole script (e.g. no #SBATCH --time) has no line to point at.
+    finding = Finding(severity="warning", rule="no-time-limit", message="Made-up message.")
+    assert finding.line is None
+
+
 def test_contracts_are_immutable():
     with pytest.raises(ValidationError):
         CHUNK.score = 1.0
