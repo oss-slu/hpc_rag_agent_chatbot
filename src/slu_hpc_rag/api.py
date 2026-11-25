@@ -1,6 +1,5 @@
 """HTTP interface."""
 
-import json
 import logging
 import time
 from collections.abc import AsyncIterator
@@ -17,10 +16,10 @@ from slu_hpc_rag import __version__
 from slu_hpc_rag.agent import build_agent, build_model, message_text
 from slu_hpc_rag.answers import AnswerRecord, AnswerStore, PostgresAnswerStore
 from slu_hpc_rag.config import get_settings
+from slu_hpc_rag.stream import done, error, token
 
 log = logging.getLogger(__name__)
 
-UNAVAILABLE = "The assistant is unavailable."
 SEARCH_TOOL = "search_docs"
 
 
@@ -32,24 +31,6 @@ class Feedback(BaseModel):
     answer_id: UUID
     rating: Literal[-1, 1]
     comment: str | None = Field(default=None, max_length=2000)
-
-
-# Server-sent events in the format agreed in #5. Swap for the stream.py
-# helpers when #5 is merged.
-def _event(**fields: Any) -> str:
-    return f"data: {json.dumps(fields)}\n\n"
-
-
-def _token(text: str) -> str:
-    return _event(type="token", text=text)
-
-
-def _done(answer_id: UUID, sources: list[dict[str, str]]) -> str:
-    return _event(type="done", answer_id=str(answer_id), sources=sources, findings=[])
-
-
-def _error() -> str:
-    return _event(type="error", message=UNAVAILABLE)
 
 
 class _Run:
@@ -157,7 +138,7 @@ def create_app(agent=None, store: AnswerStore | None = None) -> FastAPI:
                                 texts.append(answer.turn_ended(message))
                 for text in texts:
                     if text:
-                        yield _token(text)
+                        yield token(text)
             answer_id = await answers.save(
                 AnswerRecord(
                     question=question,
@@ -170,9 +151,9 @@ def create_app(agent=None, store: AnswerStore | None = None) -> FastAPI:
             )
         except Exception:
             log.exception("answering failed")
-            yield _error()
+            yield error()
             return
-        yield _done(answer_id, run.sources)
+        yield done(answer_id, run.sources)
 
     @app.get("/health")
     def health() -> dict[str, str]:
