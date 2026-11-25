@@ -1,5 +1,5 @@
 # Run `make` with no target to list commands.
-.PHONY: list setup check fmt test test-all db db-stop migrate serve image up down
+.PHONY: list setup check fmt test test-all db db-stop migrate serve ui ui-fake image up down
 
 list:
 	@awk -F':.*# ' '/^[a-z-]+:.*# /{printf "  %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -33,6 +33,12 @@ migrate: # apply database migrations
 
 serve: # run the API with auto-reload on :8000
 	uv run uvicorn slu_hpc_rag.main:app --reload
+
+ui: # run the chat UI on :8501 against the API at API_URL (default localhost:8000)
+	uv run --group ui streamlit run ui/app.py
+
+ui-fake: # run the chat UI with made-up answers; no API needed
+	FAKE_API=1 uv run --group ui streamlit run ui/app.py
 
 image: # build the Docker image
 	docker compose build app

@@ -26,6 +26,11 @@ dev = [
     "httpx>=0.27",
     "ruff>=0.8",
 ]
+ui = [
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "streamlit>=1.40",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -36,11 +41,15 @@ packages = ["src/slu_hpc_rag"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]  # so tests can import the ui package
 markers = ["db: needs a Postgres+pgvector database (set TEST_DATABASE_URL)"]
 
 [tool.coverage.run]
-source = ["slu_hpc_rag"]
-omit = ["*/slu_hpc_rag/main.py"]  # one-line ASGI entry point
+source = ["slu_hpc_rag", "ui"]
+omit = [
+    "*/slu_hpc_rag/main.py",  # one-line ASGI entry point
+    "ui/app.py",  # the Streamlit page; checked by hand (see README)
+]
 
 [tool.coverage.report]
 fail_under = 80
