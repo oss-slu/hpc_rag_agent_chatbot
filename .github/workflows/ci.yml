@@ -45,7 +45,8 @@ jobs:
         with:
           enable-cache: true
       # All dependency groups: the UI tests need Streamlit from the "ui" group.
-      - run: uv sync --locked --all-groups
+      # --no-build: install only prebuilt wheels, so no package's setup code runs.
+      - run: uv sync --locked --all-groups --no-build
       - name: Lint and format
         run: |
           uv run ruff check .
