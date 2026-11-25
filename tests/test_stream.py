@@ -47,11 +47,13 @@ def test_parser_handles_token_done_and_error_events():
     assert [e["type"] for e in stream.parse([raw])] == ["token", "done", "error"]
 
 
-@pytest.mark.parametrize("cut", range(1, 40))
+TWO_EVENTS = stream.token("Hello there") + stream.done("id-1", SOURCES)
+
+
+@pytest.mark.parametrize("cut", range(1, len(TWO_EVENTS)))  # every possible split point
 def test_parser_handles_an_event_split_across_reads(cut):
-    raw = stream.token("Hello there") + stream.done("id-1", SOURCES)
     parser = stream.EventParser()
-    events = parser.feed(raw[:cut]) + parser.feed(raw[cut:])
+    events = parser.feed(TWO_EVENTS[:cut]) + parser.feed(TWO_EVENTS[cut:])
     assert [e["type"] for e in events] == ["token", "done"]
     assert events[0]["text"] == "Hello there"
 
