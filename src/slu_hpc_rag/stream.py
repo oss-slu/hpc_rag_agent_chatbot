@@ -17,7 +17,7 @@ import json
 import time
 from collections.abc import Iterable, Iterator, Sequence
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from slu_hpc_rag.contracts import Finding
 
@@ -108,4 +108,4 @@ def fake_stream(
         if delay:
             time.sleep(delay)
         yield token(word if i == len(words) - 1 else word + " ")
-    yield done("00000000-0000-0000-0000-000000000000", sources)
+    yield done(uuid4(), sources)

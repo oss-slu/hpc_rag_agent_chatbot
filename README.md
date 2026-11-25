@@ -36,6 +36,18 @@ make serve      # http://localhost:8000/docs
 
 Run `make` on its own to see every command.
 
+## Chat UI
+
+A Streamlit chat page in `ui/` that streams answers from `/ask`, lists the
+source pages, and sends 👍/👎 to `/feedback`.
+
+```sh
+make ui-fake   # made-up answers, no API or API key needed
+make ui        # against the API at API_URL (default http://localhost:8000)
+```
+
+Open http://localhost:8501. To build the image: `docker build -f ui/Dockerfile .`
+
 ## API
 
 | Method | Path        | Request                                         | Response |
