@@ -1,0 +1,25 @@
+# Streamlit settings for the chat UI (ui/app.py).
+# Streamlit reads this file from the folder you run it in, so run the UI
+# from the repo root (make ui / make ui-fake do).
+
+[theme]
+# SLU colors: blue and white, with light grays for borders and panels.
+base = "light"
+primaryColor = "#003DA5"              # SLU blue: buttons, focus outlines
+backgroundColor = "#FFFFFF"           # page background
+secondaryBackgroundColor = "#F3F5F8"  # input boxes, chat bubbles
+textColor = "#1F2933"                 # near-black, easier on the eyes
+linkColor = "#003DA5"
+codeTextColor = "#1F2933"             # code in answers: dark gray, not green
+codeBackgroundColor = "#EEF1F5"
+borderColor = "#D6DCE4"
+showSidebarBorder = true
+baseRadius = "small"
+font = "sans-serif"
+
+[theme.sidebar]
+backgroundColor = "#F7F9FB"
+
+[client]
+# Hide Streamlit's developer menu (Deploy, Rerun, ...) from users.
+toolbarMode = "minimal"
